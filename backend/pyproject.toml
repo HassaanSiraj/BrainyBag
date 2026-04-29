@@ -1,0 +1,13 @@
+[project]
+name = "rag-learning"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.136.1",
+    "ollama>=0.6.1",
+    "pypdf>=6.10.2",
+    "python-multipart>=0.0.26",
+    "qdrant-client>=1.17.1",
+    "uvicorn[standard]>=0.46.0",
+]
