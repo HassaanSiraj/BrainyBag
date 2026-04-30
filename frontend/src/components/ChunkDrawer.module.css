@@ -1,8 +1,8 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.55);
-  z-index: 100;
+  background: rgba(26,43,28,0.3);
+  z-index: 200;
   display: flex;
   justify-content: flex-end;
   animation: fadeIn 0.15s ease;
@@ -11,51 +11,57 @@
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .drawer {
-  width: 440px;
-  max-width: 90vw;
+  width: 460px;
+  max-width: 92vw;
   height: 100%;
-  background: var(--surface);
+  background: var(--bg-panel);
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   animation: slideIn 0.2s ease;
 }
 
-@keyframes slideIn { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideIn {
+  from { transform: translateX(24px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
 
 .header {
-  padding: 20px 20px 16px;
+  padding: 22px 22px 18px;
   border-bottom: 1px solid var(--border-dim);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   flex-shrink: 0;
 }
 
-.title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.sub {
+  font-size: 12px;
+  color: var(--text-sub);
+  margin-top: 2px;
 }
 
 .close {
-  background: transparent;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   color: var(--text-muted);
-  font-size: 13px;
   width: 28px;
   height: 28px;
-  border-radius: 4px;
+  border-radius: var(--r-sm);
+  font-size: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.close:hover {
-  background: rgba(255,255,255,0.05);
-  color: var(--text);
-}
+.close:hover { color: var(--text); border-color: var(--border); }
 
 .list {
   flex: 1;
@@ -68,16 +74,15 @@
 }
 
 .chunk {
-  padding: 14px 20px;
+  padding: 16px 22px;
   border-bottom: 1px solid var(--border-dim);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
+  transition: background 0.1s;
 }
 
-.chunk:hover {
-  background: rgba(255,255,255,0.02);
-}
+.chunk:hover { background: rgba(255,255,255,0.015); }
 
 .meta {
   display: flex;
@@ -88,11 +93,13 @@
 .rank {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: var(--amber);
-  background: var(--amber-glow);
-  border: 1px solid var(--amber-dim);
-  border-radius: 4px;
-  padding: 1px 7px;
+  font-weight: 500;
+  color: var(--green);
+  background: var(--green-muted);
+  border: 1px solid var(--green-border);
+  border-radius: var(--r-sm);
+  padding: 2px 8px;
+  flex-shrink: 0;
 }
 
 .source {
@@ -100,23 +107,24 @@
   font-size: 11px;
   color: var(--text-muted);
   flex: 1;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .score {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   color: var(--green);
+  flex-shrink: 0;
 }
 
 .text {
   font-size: 12px;
-  line-height: 1.65;
-  color: var(--text-muted);
+  line-height: 1.7;
+  color: var(--text-sub);
   display: -webkit-box;
-  -webkit-line-clamp: 6;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

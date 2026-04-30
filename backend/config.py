@@ -10,7 +10,7 @@ VECTOR_SIZE       = 768          # nomic-embed-text output dimension
 
 CHUNK_SIZE        = 500          # characters per chunk — try 300–800
 CHUNK_OVERLAP     = 50           # characters of overlap between chunks
-TOP_K             = 5            # how many chunks to retrieve per query
+TOP_K             = 20            # how many chunks to retrieve per query
 
 # Per-file metadata injected as an explicit chunk at ingestion time.
 # Key   = filename (must match what's in data/)

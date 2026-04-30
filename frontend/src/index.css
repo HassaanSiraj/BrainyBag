@@ -1,61 +1,64 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=JetBrains+Mono:wght@400;500&family=Geist:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── Dark theme (default) ─────────────────────────────────────────────── */
 :root {
-  --bg:         #0c0c0d;
-  --surface:    #141415;
-  --border:     #272729;
-  --border-dim: #1c1c1e;
-  --text:       #eceae3;
-  --text-muted: #686762;
-  --text-dim:   #38383c;
-  --accent:     #e8a020;
-  --accent-dim: #7c4a10;
-  --accent-glow: rgba(232, 160, 32, 0.08);
-  --red:        #ef4444;
-  --green:      #22c55e;
-  --radius:     6px;
-  color-scheme: dark;
-}
+  /* Cream / warm light theme */
+  --bg-main:      #edeae0;
+  --bg-panel:     #f5f3eb;
+  --bg-card:      #ffffff;
+  --bg-nav:       #1a2b1c;
+  --bg-input:     #f0ede3;
 
-/* ── Light theme ──────────────────────────────────────────────────────── */
-:root[data-theme="light"] {
-  --bg:         #f5f4f0;
-  --surface:    #ffffff;
-  --border:     #e0ddd6;
-  --border-dim: #ebe9e3;
-  --text:       #1a1a18;
-  --text-muted: #7a786f;
-  --text-dim:   #c4c2bb;
-  --accent:     #c47d0e;
-  --accent-dim: #f0d9a8;
-  --accent-glow: rgba(196, 125, 14, 0.08);
-  --red:        #dc2626;
-  --green:      #16a34a;
-  color-scheme: light;
+  /* Borders */
+  --border:       #dbd8cc;
+  --border-dim:   #e8e5db;
+
+  /* Text */
+  --text:         #1a2b1c;
+  --text-sub:     #5a6b5c;
+  --text-muted:   #8a9b8c;
+  --text-nav:     #c8d8c9;
+
+  /* Forest green accent */
+  --green:        #2d6a4f;
+  --green-hover:  #246040;
+  --green-light:  rgba(45, 106, 79, 0.1);
+  --green-border: rgba(45, 106, 79, 0.25);
+  --green-muted:  #e8f0ea;
+
+  /* Status */
+  --indexed:      #2d6a4f;
+  --red:          #c0392b;
+
+  /* Misc */
+  --shadow:       0 1px 4px rgba(26,43,28,0.08);
+  --shadow-md:    0 2px 12px rgba(26,43,28,0.1);
+
+  --r-sm:   6px;
+  --r-md:   10px;
+  --r-lg:   14px;
+  --r-xl:   18px;
+  --r-full: 999px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body, #root {
   height: 100%;
-  background: var(--bg);
+  background: var(--bg-main);
   color: var(--text);
-  font-family: 'Geist', sans-serif;
+  font-family: 'Lexend', sans-serif;
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  transition: background 0.2s ease, color 0.2s ease;
 }
 
-::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 
 button {
   cursor: pointer;
-  font-family: inherit;
+  font-family: 'Lexend', sans-serif;
   font-size: 13px;
   border: none;
   outline: none;
@@ -63,7 +66,7 @@ button {
 }
 
 input, textarea {
-  font-family: inherit;
+  font-family: 'Lexend', sans-serif;
   font-size: 14px;
   outline: none;
   border: none;

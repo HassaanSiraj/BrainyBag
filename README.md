@@ -139,7 +139,7 @@ OLLAMA_LLM_MODEL   = "llama3"           # swap to llama3.2, mistral, etc.
 OLLAMA_EMBED_MODEL = "nomic-embed-text"
 CHUNK_SIZE         = 500                # characters per chunk
 CHUNK_OVERLAP      = 50                 # overlap between chunks
-TOP_K              = 5                  # chunks retrieved per query
+TOP_K              = 20                  # chunks retrieved per query
 ```
 
 To register metadata (title, author, genre) for a document so it can be found by meta-questions:

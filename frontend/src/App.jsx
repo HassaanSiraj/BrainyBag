@@ -1,44 +1,31 @@
 import { useEffect, useState } from "react";
 import { getStatus } from "./api";
-import ChatPanel from "./components/ChatPanel";
-import DocumentPanel from "./components/DocumentPanel";
+import IconNav from "./components/IconNav";
+import DocPanel from "./components/DocPanel";
+import ChatArea from "./components/ChatArea";
 import styles from "./App.module.css";
 
 export default function App() {
-  const [status, setStatus] = useState(null);
-  const [theme, setTheme]   = useState(() => {
-    return localStorage.getItem("theme") || "dark";
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+  const [status, setStatus]   = useState(null);
+  const [activeView, setView] = useState("library");
+  const [selectedDoc, setDoc] = useState(null);
 
   const fetchStatus = async () => {
-    try {
-      const s = await getStatus();
-      setStatus(s);
-    } catch {
-      setStatus(null);
-    }
+    try { setStatus(await getStatus()); }
+    catch { setStatus(null); }
   };
 
   useEffect(() => { fetchStatus(); }, []);
 
-  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
-
   return (
     <div className={styles.layout}>
-      <DocumentPanel onStatusChange={fetchStatus} />
-      <ChatPanel status={status} />
-      <button
-        className={styles.themeToggle}
-        onClick={toggleTheme}
-        title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-      >
-        {theme === "dark" ? "☀" : "☾"}
-      </button>
+      <IconNav activeView={activeView} onNavigate={setView} />
+      <DocPanel
+        selectedDoc={selectedDoc}
+        onSelectDoc={setDoc}
+        onStatusChange={fetchStatus}
+      />
+      <ChatArea selectedDoc={selectedDoc} status={status} />
     </div>
   );
 }
