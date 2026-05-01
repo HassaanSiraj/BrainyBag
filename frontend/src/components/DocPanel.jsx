@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { deleteDocument, getDocumentFileUrl, listDocuments, reingestDocument, uploadDocument } from "../api";
+import BrainyBagLogo from "./BrainyBagLogo";
 import styles from "./DocPanel.module.css";
 
 const FILE_COLORS = ["#e8c4a0", "#a8c4e8", "#c4e8a8", "#e8a8c4", "#c4a8e8", "#e8e0a8"];
@@ -124,6 +125,15 @@ export default function DocPanel({ onSelectDoc, onStatusChange }) {
 
   return (
     <aside className={styles.panel}>
+      {/* Brand header */}
+      <div className={styles.brand}>
+        <BrainyBagLogo size={44} />
+        <div>
+          <p className={styles.brandName}>BrainyBag</p>
+          <p className={styles.brandTagline}>AI Knowledge Assistant</p>
+        </div>
+      </div>
+
       <div className={styles.header}>
         <h2 className={styles.heading}>Document Management</h2>
       </div>

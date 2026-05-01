@@ -97,15 +97,15 @@ export default function ChatArea({ selectedDoc, onClearDoc, status }) {
       {isEmpty ? (
         <div className={styles.empty}>
           {/* Watermark */}
-          <div className={styles.watermark}>A</div>
+          <div className={styles.watermark}>B</div>
 
           <div className={styles.emptyContent}>
             <p className={styles.welcome}>
-              Welcome to Athena, your personal AI knowledge assistant.
-              {selectedDoc && <> Exploring <em>{selectedDoc.replace(/\.[^.]+$/, "")}</em>.</>}
-              {!selectedDoc && " How can I help you explore your library today?"}
+              {selectedDoc
+                ? <>You're now chatting with <em>{selectedDoc.replace(/\.[^.]+$/, "")}</em>. Ask me anything about this book.</>
+                : "Welcome to BrainyBag, your personal AI knowledge assistant. Select a book or ask across your entire library."}
             </p>
-            <h1 className={styles.mainTitle}>AI Knowledge{"\n"}Assistant</h1>
+            <h1 className={styles.mainTitle}>BrainyBag</h1>
 
             <div className={styles.pills}>
               {SUGGESTIONS.map((s) => (
@@ -141,7 +141,7 @@ export default function ChatArea({ selectedDoc, onClearDoc, status }) {
           <textarea
             ref={textareaRef}
             className={styles.input}
-            placeholder="Ask Athena anything about your books…"
+            placeholder={selectedDoc ? `Ask about ${selectedDoc.replace(/\.[^.]+$/, "")}…` : "Ask BrainyBag anything about your books…"}
             value={input}
             rows={1}
             onChange={(e) => setInput(e.target.value)}
