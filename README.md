@@ -4,6 +4,12 @@
 
 ---
 
+## Demo
+
+<video src="assets/demo.mp4" controls width="100%"></video>
+
+---
+
 ## Tech Stack
 
 | Layer | Technology | Role |
