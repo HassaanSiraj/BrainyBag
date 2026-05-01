@@ -40,6 +40,7 @@ app.add_middleware(
 
 class QueryRequest(BaseModel):
     question: str
+    source:   str | None = None   # if set, restricts search to this document
 
 
 class QueryResponse(BaseModel):
@@ -131,8 +132,8 @@ def query(req: QueryRequest):
     Retrieve relevant chunks and return both the chunks and the generated answer.
     Useful for understanding what context the LLM used.
     """
-    chunks = qry.retrieve(req.question)
-    answer_tokens = list(qry.stream_answer(req.question))
+    chunks = qry.retrieve(req.question, source=req.source)
+    answer_tokens = list(qry.stream_answer(req.question, source=req.source))
     return QueryResponse(
         question=req.question,
         chunks=chunks,

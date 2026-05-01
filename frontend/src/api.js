@@ -78,12 +78,11 @@ export async function reingestDocument(filename) {
  * onToken(str) is called for each chunk.
  * onChunks(arr) is called once with the retrieved context chunks.
  */
-export async function streamQuery(question, onToken, onChunks) {
-  // First fetch the chunks separately so we can show them
+export async function streamQuery(question, onToken, onChunks, source = null) {
   const metaRes = await fetch(`${BASE}/query`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, ...(source ? { source } : {}) }),
   });
 
   if (!metaRes.ok) throw new Error("Query failed");

@@ -40,12 +40,15 @@ function Message({ msg }) {
   );
 }
 
-export default function ChatArea({ selectedDoc, status }) {
+export default function ChatArea({ selectedDoc, onClearDoc, status }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput]       = useState("");
   const [busy, setBusy]         = useState(false);
   const bottomRef   = useRef();
   const textareaRef = useRef();
+
+  // Reset conversation whenever the active book changes
+  useEffect(() => { setMessages([]); }, [selectedDoc]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -77,6 +80,7 @@ export default function ChatArea({ selectedDoc, status }) {
         q,
         (t) => setMessages((p) => p.map((m) => m.id === aiId ? { ...m, content: m.content + t } : m)),
         (c) => setMessages((p) => p.map((m) => m.id === aiId ? { ...m, chunks: c } : m)),
+        selectedDoc || null,
       );
     } catch (e) {
       setMessages((p) => p.map((m) => m.id === aiId ? { ...m, content: `Error: ${e.message}` } : m));
@@ -117,6 +121,18 @@ export default function ChatArea({ selectedDoc, status }) {
         <div className={styles.messages}>
           {messages.map((m) => <Message key={m.id} msg={m} />)}
           <div ref={bottomRef} />
+        </div>
+      )}
+
+      {selectedDoc && (
+        <div className={styles.scopeBanner}>
+          <span className={styles.scopeIcon}>📖</span>
+          <span className={styles.scopeLabel}>
+            Asking about <strong>{selectedDoc.replace(/\.[^.]+$/, "")}</strong>
+          </span>
+          <button className={styles.scopeClear} onClick={onClearDoc} title="Search all books">
+            ✕ All books
+          </button>
         </div>
       )}
 

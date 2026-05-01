@@ -18,7 +18,7 @@ export default function App() {
   return (
     <div className={styles.layout}>
       <DocPanel onSelectDoc={setDoc} onStatusChange={fetchStatus} />
-      <ChatArea selectedDoc={selectedDoc} status={status} />
+      <ChatArea selectedDoc={selectedDoc} onClearDoc={() => setDoc(null)} status={status} />
     </div>
   );
 }
