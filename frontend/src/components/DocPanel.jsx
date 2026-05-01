@@ -1,61 +1,62 @@
 import { useEffect, useRef, useState } from "react";
-import { deleteDocument, listDocuments, reingestDocument, uploadDocument } from "../api";
+import { deleteDocument, getDocumentFileUrl, listDocuments, reingestDocument, uploadDocument } from "../api";
 import styles from "./DocPanel.module.css";
 
 const FILE_COLORS = ["#e8c4a0", "#a8c4e8", "#c4e8a8", "#e8a8c4", "#c4a8e8", "#e8e0a8"];
 
-function DocCard({ doc, isSelected, onSelect, onDelete, onReingest, colorIdx }) {
+function DocCard({ doc, onAskQuestions, onDelete, onReingest, colorIdx }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const ext = doc.source.split(".").pop().toUpperCase();
-  const name = doc.source.replace(/\.[^.]+$/, "");
+  const ext   = doc.source.split(".").pop().toUpperCase();
+  const name  = doc.source.replace(/\.[^.]+$/, "");
   const color = FILE_COLORS[colorIdx % FILE_COLORS.length];
+  const fileUrl = getDocumentFileUrl(doc.source);
 
   return (
-    <div
-      className={`${styles.card} ${isSelected ? styles.cardSelected : ""}`}
-      onClick={() => onSelect(doc.source)}
-    >
-      {/* Thumbnail */}
-      <div className={styles.thumb} style={{ background: color }}>
+    <div className={styles.card}>
+      {/* Clickable book cover — opens file in new tab */}
+      <a
+        className={styles.thumb}
+        style={{ background: color }}
+        href={fileUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Open book"
+      >
         <span className={styles.thumbExt}>{ext}</span>
-      </div>
+      </a>
 
       {/* Info */}
       <div className={styles.info}>
-        <p className={styles.docTitle}>{name}</p>
-        <p className={styles.docMeta}>{doc.chunks} chunks</p>
-        <div className={styles.progressRow}>
-          <div className={styles.progressBar}>
-            <div className={styles.progressFill} style={{ width: "100%" }} />
-          </div>
-          <span className={styles.progressLabel}>Indexed</span>
-        </div>
-        <div className={styles.statusRow}>
-          <span className={styles.statusBadge}>
-            <span className={styles.statusDot} />
-            AI Indexing Status: Indexed
-          </span>
-        </div>
-      </div>
+        <div className={styles.cardTop}>
+          <p className={styles.docTitle}>{name}</p>
 
-      {/* Menu */}
-      <div className={styles.menuWrap} onClick={(e) => e.stopPropagation()}>
-        <button className={styles.menuBtn} onClick={() => setMenuOpen(!menuOpen)}>⋯</button>
-        {menuOpen && (
-          <div className={styles.menu}>
-            <button onClick={() => { onReingest(doc.source); setMenuOpen(false); }}>↺ Re-index</button>
-            <button className={styles.menuDanger} onClick={() => { onDelete(doc.source); setMenuOpen(false); }}>✕ Remove</button>
+          {/* ⋯ menu */}
+          <div className={styles.menuWrap}>
+            <button className={styles.menuBtn} onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}>⋯</button>
+            {menuOpen && (
+              <div className={styles.menu}>
+                <button onClick={() => { onReingest(doc.source); setMenuOpen(false); }}>↺ Re-index</button>
+                <button className={styles.menuDanger} onClick={() => { onDelete(doc.source); setMenuOpen(false); }}>✕ Remove</button>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        <p className={styles.docMeta}>{doc.chunks} chunks · <span className={styles.indexed}>Indexed</span></p>
+
+        <button className={styles.btnAsk} onClick={() => onAskQuestions(doc.source)}>
+          💬 Ask Questions
+        </button>
       </div>
     </div>
   );
 }
 
-export default function DocPanel({ selectedDoc, onSelectDoc, onStatusChange }) {
-  const [docs, setDocs]         = useState([]);
+export default function DocPanel({ onSelectDoc, onStatusChange }) {
+  const [docs, setDocs]           = useState([]);
   const [uploading, setUploading] = useState(false);
-  const [toast, setToast]       = useState(null);
+  const [progress, setProgress]   = useState(null); // { phase, current, total }
+  const [toast, setToast]         = useState(null);
   const fileRef = useRef();
 
   const showToast = (msg, type = "info") => {
@@ -81,14 +82,19 @@ export default function DocPanel({ selectedDoc, onSelectDoc, onStatusChange }) {
         continue;
       }
       setUploading(true);
+      setProgress({ phase: "Preparing…", current: 0, total: 0 });
       try {
-        const r = await uploadDocument(file);
+        const r = await uploadDocument(file, false, (evt) => {
+          if (!evt.done) setProgress({ phase: evt.phase, current: evt.current, total: evt.total });
+        });
+        setProgress(null);
         showToast(
-          r.status === "skipped" ? `"${file.name}" already indexed` : `"${file.name}" — ${r.chunks} chunks`,
+          r.status === "skipped" ? `"${file.name}" already indexed` : `"${file.name}" — ${r.chunks} chunks indexed`,
           r.status === "skipped" ? "warn" : "ok"
         );
         refresh(true);
       } catch (e) {
+        setProgress(null);
         showToast(e.message, "error");
       } finally {
         setUploading(false);
@@ -100,7 +106,7 @@ export default function DocPanel({ selectedDoc, onSelectDoc, onStatusChange }) {
     if (!confirm(`Remove "${filename}"?`)) return;
     try {
       await deleteDocument(filename);
-      if (selectedDoc === filename) onSelectDoc(null);
+      onSelectDoc(null);
       showToast(`"${filename}" removed`, "ok");
       refresh(true);
     } catch (e) { showToast(e.message, "error"); }
@@ -131,8 +137,7 @@ export default function DocPanel({ selectedDoc, onSelectDoc, onStatusChange }) {
             key={doc.source}
             doc={doc}
             colorIdx={i}
-            isSelected={selectedDoc === doc.source}
-            onSelect={onSelectDoc}
+            onAskQuestions={(f) => onSelectDoc(f)}
             onDelete={handleDelete}
             onReingest={handleReingest}
           />
@@ -148,18 +153,44 @@ export default function DocPanel({ selectedDoc, onSelectDoc, onStatusChange }) {
           style={{ display: "none" }}
           onChange={(e) => handleFiles([...e.target.files])}
         />
-        <button
-          className={styles.importBtn}
-          onClick={() => !uploading && fileRef.current.click()}
-          disabled={uploading}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => { e.preventDefault(); handleFiles([...e.dataTransfer.files]); }}
-        >
-          {uploading
-            ? <><span className={styles.spinner} /> Indexing…</>
-            : <>+ Import New Document</>
-          }
-        </button>
+
+        {uploading && progress ? (
+          <div className={styles.progressBox}>
+            <div className={styles.progressHeader}>
+              <span className={styles.progressPhase}>{progress.phase}</span>
+              {progress.total > 0 && (
+                <span className={styles.progressCount}>
+                  {progress.current} / {progress.total}
+                </span>
+              )}
+            </div>
+            <div className={styles.progressTrack}>
+              <div
+                className={styles.progressFill}
+                style={{
+                  width: progress.total > 0
+                    ? `${Math.round((progress.current / progress.total) * 100)}%`
+                    : "100%",
+                  animation: progress.total === 0 ? "indeterminate 1.4s ease infinite" : "none",
+                }}
+              />
+            </div>
+            {progress.total > 0 && (
+              <p className={styles.progressPct}>
+                {Math.round((progress.current / progress.total) * 100)}% complete
+              </p>
+            )}
+          </div>
+        ) : (
+          <button
+            className={styles.importBtn}
+            onClick={() => fileRef.current.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => { e.preventDefault(); handleFiles([...e.dataTransfer.files]); }}
+          >
+            + Import New Document
+          </button>
+        )}
       </div>
 
       {toast && (

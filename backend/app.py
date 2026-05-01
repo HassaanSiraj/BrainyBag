@@ -4,11 +4,12 @@ Run with: uv run uvicorn app:app --reload
 Docs at:  http://localhost:8000/docs
 """
 
+import json
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 import ingest as ing
@@ -65,13 +66,13 @@ def list_documents():
     return ing.list_documents()
 
 
-@app.post("/documents/upload", summary="Upload and ingest a file (PDF / TXT / MD)")
+@app.post("/documents/upload", summary="Upload and ingest a file — streams SSE progress")
 async def upload_document(file: UploadFile, force: bool = False):
     """
-    Upload a document and ingest it into Qdrant.
-
-    - **force=false** (default): skip if the file is already ingested
-    - **force=true**: delete existing chunks and re-ingest from scratch
+    Upload a document and stream ingestion progress as Server-Sent Events.
+    Each event is a JSON object:
+      {"done": false, "phase": "Embedding", "current": 42, "total": 300}
+    The final event has done=true and includes the ingestion summary.
     """
     allowed = {".pdf", ".txt", ".md"}
     suffix  = Path(file.filename).suffix.lower()
@@ -81,8 +82,15 @@ async def upload_document(file: UploadFile, force: bool = False):
     dest = DATA_DIR / file.filename
     dest.write_bytes(await file.read())
 
-    result = ing.ingest_file(dest, force=force)
-    return result
+    def event_stream():
+        for progress in ing.ingest_file_iter(dest, force=force):
+            yield f"data: {json.dumps(progress)}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.delete("/documents/{filename}", summary="Delete all chunks for a document")
@@ -91,6 +99,17 @@ def delete_document(filename: str):
     if result["status"] == "not_found":
         raise HTTPException(status_code=404, detail=f"'{filename}' not found in collection")
     return result
+
+
+@app.get("/documents/{filename}/file", summary="Serve the raw uploaded file")
+def serve_document_file(filename: str):
+    path = DATA_DIR / filename
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"'{filename}' not found in data/ folder")
+    return FileResponse(
+        path,
+        headers={"Content-Disposition": f"inline; filename=\"{filename}\""},
+    )
 
 
 @app.post("/documents/{filename}/reingest", summary="Delete and re-ingest an already-uploaded file")

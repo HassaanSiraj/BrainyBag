@@ -89,19 +89,42 @@ def ingest_file(path: Path, force: bool = False) -> dict:
     Ingest a single file. Returns a summary dict.
     force=True deletes existing chunks and re-ingests from scratch.
     """
+    # Consume the streaming generator and return the final event.
+    result = {}
+    for event in ingest_file_iter(path, force=force):
+        result = event
+    return result
+
+
+def ingest_file_iter(path: Path, force: bool = False):
+    """
+    Generator version of ingest_file.
+    Yields progress dicts:  {"done": False, "phase": str, "current": int, "total": int}
+    Final yield:            {"done": True,  "status": str, "source": str, "chunks": int, ...}
+    """
     client = get_client()
     ensure_collection(client)
     source = path.name
 
     if already_ingested(client, source):
         if not force:
-            return {"source": source, "status": "skipped", "reason": "already ingested"}
+            yield {"done": True, "source": source, "status": "skipped", "reason": "already ingested", "chunks": 0}
+            return
+        yield {"done": False, "phase": "Removing previous index…", "current": 0, "total": 0}
         delete_file_chunks(client, source)
 
-    text   = extract_text(path)
+    yield {"done": False, "phase": "Reading document…", "current": 0, "total": 0}
+    text = extract_text(path)
+
+    yield {"done": False, "phase": "Splitting into chunks…", "current": 0, "total": 0}
     chunks = chunk_text(text, source=source)
-    texts   = [c["text"] for c in chunks]
-    vectors = embed(texts)
+    total  = len(chunks)
+
+    vectors = []
+    for i, chunk in enumerate(chunks):
+        yield {"done": False, "phase": "Embedding", "current": i + 1, "total": total}
+        vec = ollama.embeddings(model=OLLAMA_EMBED_MODEL, prompt=chunk["text"])["embedding"]
+        vectors.append(vec)
 
     points = [
         PointStruct(
@@ -111,16 +134,30 @@ def ingest_file(path: Path, force: bool = False) -> dict:
         )
         for i, c in enumerate(chunks)
     ]
-    client.upsert(collection_name=COLLECTION_NAME, points=points)
+
+    # Upsert in batches to stay within Qdrant's 32 MB payload limit.
+    batch_size = 100
+    num_batches = max(1, (len(points) + batch_size - 1) // batch_size)
+    for b in range(num_batches):
+        batch = points[b * batch_size : (b + 1) * batch_size]
+        yield {
+            "done": False,
+            "phase": "Storing in vector database…",
+            "current": min((b + 1) * batch_size, len(points)),
+            "total": len(points),
+        }
+        client.upsert(collection_name=COLLECTION_NAME, points=batch)
+
     upsert_metadata_chunk(client, source)
 
-    return {
-        "source":       source,
-        "status":       "ingested",
-        "chunks":       len(points),
-        "chunk_size":   CHUNK_SIZE,
+    yield {
+        "done":          True,
+        "source":        source,
+        "status":        "ingested",
+        "chunks":        len(points),
+        "chunk_size":    CHUNK_SIZE,
         "chunk_overlap": CHUNK_OVERLAP,
-        "has_metadata": source in FILE_METADATA,
+        "has_metadata":  source in FILE_METADATA,
     }
 
 

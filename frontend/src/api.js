@@ -1,5 +1,8 @@
 const BASE = "http://localhost:8000";
 
+export const getDocumentFileUrl = (filename) =>
+  `${BASE}/documents/${encodeURIComponent(filename)}/file`;
+
 export async function getStatus() {
   const r = await fetch(`${BASE}/status`);
   return r.json();
@@ -10,7 +13,12 @@ export async function listDocuments() {
   return r.json();
 }
 
-export async function uploadDocument(file, force = false) {
+/**
+ * Upload a file and stream ingestion progress via SSE.
+ * onProgress({ done, phase, current, total }) is called for every event.
+ * Resolves with the final summary object when done=true.
+ */
+export async function uploadDocument(file, force = false, onProgress = null) {
   const form = new FormData();
   form.append("file", file);
   const r = await fetch(`${BASE}/documents/upload?force=${force}`, {
@@ -21,7 +29,26 @@ export async function uploadDocument(file, force = false) {
     const err = await r.json();
     throw new Error(err.detail || "Upload failed");
   }
-  return r.json();
+
+  const reader  = r.body.getReader();
+  const decoder = new TextDecoder();
+  let   buffer  = "";
+  let   result  = null;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop(); // keep incomplete last line
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const event = JSON.parse(line.slice(6));
+      onProgress?.(event);
+      if (event.done) result = event;
+    }
+  }
+  return result;
 }
 
 export async function deleteDocument(filename) {
