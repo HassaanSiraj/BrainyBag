@@ -6,7 +6,7 @@
 
 ## Demo
 
-<video src="assets/demo.mp4" controls width="100%"></video>
+<video src="https://github.com/user-attachments/assets/aa726cdd-54ad-4dfe-8208-e9d1ef488f54" controls width="100%"></video>
 
 ---
 
